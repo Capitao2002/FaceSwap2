@@ -1,14 +1,21 @@
+# Usa uma imagem leve do Python
 FROM python:3.10-slim
 
+# Cria e define o diretório de trabalho
 WORKDIR /app
 
+# Copia todos os arquivos do seu projeto para dentro do contêiner
 COPY . /app
 
-RUN pip install --upgrade pip
-RUN pip install flask python-telegram-bot facefusion
+# Atualiza o pip e instala as dependências diretamente
+RUN pip install --upgrade pip && \
+    pip install flask python-telegram-bot==13.15 facefusion
 
+# Cria pasta para arquivos temporários
 RUN mkdir -p static
 
+# Expõe a porta usada pelo Flask
 EXPOSE 5000
 
+# Comando para rodar sua aplicação
 CMD ["python", "app.py"]
