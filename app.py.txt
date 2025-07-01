@@ -1,0 +1,40 @@
+from flask import Flask, request
+import telegram
+import os
+from swap_face import process_video
+from bot_config import TELEGRAM_TOKEN
+
+app = Flask(__name__)
+bot = telegram.Bot(token=TELEGRAM_TOKEN)
+user_sessions = {}
+
+@app.route('/', methods=['POST'])
+def webhook():
+    update = telegram.Update.de_json(request.get_json(force=True), bot)
+    chat_id = update.message.chat.id
+
+    if update.message.video:
+        video = update.message.video.get_file()
+        file_path = f'static/input_{chat_id}.mp4'
+        video.download(file_path)
+        user_sessions[chat_id] = {'video': file_path}
+        bot.send_message(chat_id, "Vídeo recebido. Agora envie uma imagem com o rosto desejado.")
+
+    elif update.message.photo:
+        photo = update.message.photo[-1].get_file()
+        photo_path = f'static/face_{chat_id}.jpg'
+        photo.download(photo_path)
+        video_path = user_sessions.get(chat_id, {}).get('video')
+
+        if video_path:
+            output_path = f'static/output_{chat_id}.mp4'
+            bot.send_message(chat_id, "Processando vídeo...")
+            process_video(video_path, photo_path, output_path)
+            bot.send_video(chat_id, open(output_path, 'rb'), caption="Aqui está seu vídeo com o rosto trocado.")
+        else:
+            bot.send_message(chat_id, "Por favor, envie primeiro o vídeo.")
+
+    else:
+        bot.send_message(chat_id, "Envie um vídeo e depois a imagem do rosto.")
+
+    return 'ok'

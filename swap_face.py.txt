@@ -1,0 +1,4 @@
+import os
+
+def process_video(video_path, face_path, output_path):
+    os.system(f"facefusion --target-video '{video_path}' --source-image '{face_path}' --output-video '{output_path}' --headless")
